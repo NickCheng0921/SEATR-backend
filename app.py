@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS, cross_origin
 from helper.grid import *
@@ -22,7 +22,8 @@ class Code(db.Model):
 class Profile(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     code = db.Column(db.String(64))
-    gradYear = db.Column(db.Integer)
+    gradYear = db.Column(db.String(64))
+    major = db.Column(db.String(64))
     hobbies = db.Column(db.String(255))
     majInterest = db.Column(db.String(255))
     carInterest = db.Column(db.String(255))
@@ -54,8 +55,6 @@ def create_code():
         db.session.commit()
 
         if debug:
-            codes = Code.query.all()  # Retrieve all code entries from the "Code" table
-            code_returns = [code.code for code in codes]  # Return a list of code value
             return code
         else:
             return 'Code added successfully'
@@ -70,14 +69,17 @@ def check_code():
     Returns:
         str: Response message indicating whether the code value exists or not.
     """
-    code = request.form.get('code')  # Get the 'code' parameter from the POST request
+    request_data = request.get_json()
+    code = request_data.get('code')
 
     # Error handling for missing or invalid 'code' parameter
     if code is None or not isinstance(code, str) or code.strip() == '':
         response = {'error': 'Invalid input', 'message': 'The "code" parameter is required and must be a non-empty string.'}
         return jsonify(response), 400
 
-    if code in code_table:
+    codes = Code.query.all()  # Retrieve all code entries from the "Code" table
+    code_returns = [code.code for code in codes]  # Return a list of code value
+    if code in code_returns:
         response = {'message': f'Code "{code}" exists in the code table.'}
     else:
         response = {'message': f'Code "{code}" does not exist in the code table.'}, 400
@@ -87,16 +89,17 @@ def check_code():
 @app.route('/createprofile', methods=['POST'])
 def create_profile():
     # Get data from request
-
-    code = request.form['code']
-    grad_year = request.form['gradYear']
-    hobbies = request.form['hobbies']
-    maj_interest = request.form['majInterest']
-    car_interest = request.form['carInterest']
-    other_class = request.form['otherClass']
+    request_data = request.get_json()
+    code = request_data.get('code')
+    grad_year = request_data.get('year')
+    major = request_data.get('major')
+    hobbies = request_data.get('hobbies')
+    maj_interest = request_data.get('msi')
+    car_interest = request_data.get('cpi')
+    other_class = request_data.get('otherClasses')
 
     # Create a new profile
-    profile = Profile(code=code, gradYear=grad_year, hobbies=hobbies, majInterest=maj_interest, carInterest=car_interest, otherClass=other_class)
+    profile = Profile(code=code, gradYear=grad_year, major=major, hobbies=hobbies, majInterest=maj_interest, carInterest=car_interest, otherClass=other_class)
     db.session.add(profile)
     db.session.commit()
 
