@@ -1,9 +1,11 @@
 from flask import Flask, render_template, request
 from flask_sqlalchemy import SQLAlchemy
+from flask_cors import CORS, cross_origin
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///example.db'  # Replace with your desired database URI
 db = SQLAlchemy(app)
+CORS(app)
 
 debug=True
 
@@ -34,11 +36,14 @@ if __name__ == '__main__':
 def index():
     return render_template('index.html')
 
-@app.route('/createcode', methods=['POST'])
+@app.route('/createcode/', methods=['POST'])
 def create_code():
     if request.method == 'POST':
         # Get the string value from the request body
-        code = request.form['code']
+        request_data = request.get_json()
+        code = request_data.get('code')
+        print("Generating code ", code)
+
 
         # Create a new Code object and add it to the session
         new_code = Code(code=code)
@@ -48,7 +53,7 @@ def create_code():
         if debug:
             codes = Code.query.all()  # Retrieve all code entries from the "Code" table
             code_returns = [code.code for code in codes]  # Return a list of code value
-            return code_returns
+            return code
         else:
             return 'Code added successfully'
     else:
@@ -57,6 +62,7 @@ def create_code():
 @app.route('/createprofile', methods=['POST'])
 def create_profile():
     # Get data from request
+
     code = request.form['code']
     grad_year = request.form['gradYear']
     hobbies = request.form['hobbies']
@@ -72,3 +78,7 @@ def create_profile():
     # Return success message
     return jsonify({'message': 'Profile created successfully'})
 
+
+hostAddress = 'localhost'
+if __name__ == '__main__':
+    app.run(host=hostAddress, port=5000, debug=True)
