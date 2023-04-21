@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS, cross_origin
+from helper.grid import *
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///example.db'  # Replace with your desired database URI
@@ -8,6 +9,8 @@ db = SQLAlchemy(app)
 CORS(app)
 
 debug=True
+
+print(calculate_grid_size(27))
 
 class Code(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -58,6 +61,28 @@ def create_code():
             return 'Code added successfully'
     else:
         return 'Invalid request'
+
+@app.route('/checkcode/', methods=['POST'])
+def check_code():
+    """
+    Check if a given code value exists in the code table.
+
+    Returns:
+        str: Response message indicating whether the code value exists or not.
+    """
+    code = request.form.get('code')  # Get the 'code' parameter from the POST request
+
+    # Error handling for missing or invalid 'code' parameter
+    if code is None or not isinstance(code, str) or code.strip() == '':
+        response = {'error': 'Invalid input', 'message': 'The "code" parameter is required and must be a non-empty string.'}
+        return jsonify(response), 400
+
+    if code in code_table:
+        response = {'message': f'Code "{code}" exists in the code table.'}
+    else:
+        response = {'message': f'Code "{code}" does not exist in the code table.'}, 400
+    return jsonify(response)
+
 
 @app.route('/createprofile', methods=['POST'])
 def create_profile():
