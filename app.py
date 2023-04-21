@@ -10,8 +10,6 @@ CORS(app)
 
 debug=True
 
-print(calculate_grid_size(27))
-
 class Code(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     code = db.Column(db.String(64), unique=True)
@@ -29,9 +27,31 @@ class Profile(db.Model):
     carInterest = db.Column(db.String(255))
     otherClass = db.Column(db.String(255))
 
+def setup(db):
+    new_code = Code(code="csce436")
+    db.session.add(new_code)
+    db.session.commit()
+
+    for i in range(1, 28):
+        code = "csce436"
+        grad_year = "2021"
+        major = "Computer Science"+str(i)
+        hobbies = "Hobbies"+str(i)
+        maj_interest = "Major Interest"+str(i)
+        car_interest = "Car Interest"+str(i)
+        other_class = "Other Classes"+str(i)
+        profile = Profile(code=code, gradYear=grad_year, major=major, hobbies=hobbies, majInterest=maj_interest, carInterest=car_interest, otherClass=other_class)
+        db.session.add(profile)
+        db.session.commit()
+
+    profiles = Profile.query.all()
+    profile_returns = [profile.code for profile in profiles]
+
 # Create all tables and test
 with app.app_context():
     db.create_all()
+
+    setup(db)
 
 if __name__ == '__main__':
     app.run(debug=True)
@@ -47,7 +67,6 @@ def create_code():
         request_data = request.get_json()
         code = request_data.get('code')
         print("Generating code ", code)
-
 
         # Create a new Code object and add it to the session
         new_code = Code(code=code)
@@ -107,6 +126,17 @@ def create_profile():
     return jsonify({'message': 'Profile created successfully'})
 
 
+@app.route('/getprofiles', methods=['POST'])
+def get_profiles():
+    # Get data from request
+    request_data = request.get_json()
+    code = request.get('code')
+    # Get profiles with matching code
+    profiles = Profile.query.filter_by(code=code).all()
+    # Return profiles
+    return jsonify({'profiles': profiles})
+
 hostAddress = 'localhost'
 if __name__ == '__main__':
     app.run(host=hostAddress, port=5000, debug=True)
+
