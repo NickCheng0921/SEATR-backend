@@ -27,6 +27,18 @@ class Profile(db.Model):
     carInterest = db.Column(db.String(255))
     otherClass = db.Column(db.String(255))
 
+    def serialize(self):
+        return {
+            "id": self.id,
+            "code": self.code,
+            "gradYear": self.gradYear,
+            "major": self.major,
+            "hobbies": self.hobbies,
+            "majInterest": self.majInterest,
+            "carInterest": self.carInterest,
+            "otherClass": self.otherClass,
+        }
+
 def setup(db):
     new_code = Code(code="csce436")
     db.session.add(new_code)
@@ -49,6 +61,9 @@ def setup(db):
 
 # Create all tables and test
 with app.app_context():
+    if "code" in db.metadata.tables.keys():
+        db.session.query(Code).delete()
+        db.session.query(Profile).delete()
     db.create_all()
 
     setup(db)
@@ -92,20 +107,24 @@ def check_code():
     code = request_data.get('code')
 
     # Error handling for missing or invalid 'code' parameter
-    if code is None or not isinstance(code, str) or code.strip() == '':
-        response = {'error': 'Invalid input', 'message': 'The "code" parameter is required and must be a non-empty string.'}
-        return jsonify(response), 400
+    if code is None or code.strip() == '':
+        response = jsonify({'error': 'Invalid input', 'message': 'The "code" parameter is required and must be a non-empty string.'})
+        response.status_code = 400
+        return response
 
     codes = Code.query.all()  # Retrieve all code entries from the "Code" table
     code_returns = [code.code for code in codes]  # Return a list of code value
+    print(code, code_returns)
     if code in code_returns:
-        response = {'message': f'Code "{code}" exists in the code table.'}
+        response = {'message': f'Code "{code}" exists in the code table.'}, 200
     else:
-        response = {'message': f'Code "{code}" does not exist in the code table.'}, 400
+        response = jsonify({'message': f'Code "{code}" does not exist in the code table.'})
+        response.status_code = 400
+    print(response)
     return jsonify(response)
 
 
-@app.route('/createprofile', methods=['POST'])
+@app.route('/createprofile/', methods=['POST'])
 def create_profile():
     # Get data from request
     request_data = request.get_json()
@@ -126,15 +145,16 @@ def create_profile():
     return jsonify({'message': 'Profile created successfully'})
 
 
-@app.route('/getprofiles', methods=['POST'])
+@app.route('/getprofiles/', methods=['POST'])
 def get_profiles():
     # Get data from request
     request_data = request.get_json()
-    code = request.get('code')
+    code = request_data.get('code')
     # Get profiles with matching code
     profiles = Profile.query.filter_by(code=code).all()
+    res_profiles = [x.serialize() for x in profiles]
     # Return profiles
-    return jsonify({'profiles': profiles})
+    return jsonify(res_profiles)
 
 hostAddress = 'localhost'
 if __name__ == '__main__':
