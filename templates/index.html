@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
+    <script src="https://canvasjs.com/assets/script/canvasjs.min.js"></script>
+    <link rel="shortcut icon" href="#" />
+</head>
+
+<body>
+    <h1>Create Code</h1>
+    <form id="codeForm">
+      <label>
+        Code:
+        <input type="text" name="code" id="codeInput">
+      </label>
+      <br>
+      <input type="submit" value="Submit">
+    </form>
+    <script>
+      // AJAX form submission
+      $('#codeForm').submit(function(e) {
+        e.preventDefault();
+        var formData = $(this).serialize();
+        $.ajax({
+          type: 'POST',
+          url: '/createcode',
+          data: formData,
+          success: function(data) {
+            console.log('Code added successfully:', data);
+          },
+          error: function(error) {
+            console.error('Error adding code:', error);
+          }
+        });
+      });
+    </script>
+  </body>
+
+</html>
