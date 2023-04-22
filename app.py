@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS, cross_origin
 from helper.grid import *
+import random
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///example.db'  # Replace with your desired database URI
@@ -65,7 +66,6 @@ with app.app_context():
         db.session.query(Code).delete()
         db.session.query(Profile).delete()
     db.create_all()
-
     setup(db)
 
 if __name__ == '__main__':
@@ -155,6 +155,26 @@ def get_profiles():
     res_profiles = [x.serialize() for x in profiles]
     # Return profiles
     return jsonify(res_profiles)
+
+@app.route('/getseatingchart/', methods=['POST'])
+def get_seating_chart():
+    # Get data from request
+    request_data = request.get_json()
+    code = request_data.get('code')
+    # Get profiles with matching code
+    profiles = Profile.query.filter_by(code=code).all()
+    res_profiles = [x.serialize() for x in profiles]
+    num_students = len(res_profiles)
+    #N, K = calculate_grid_size(num_students)
+    
+    #reorder list
+    original_list = list(range(1, num_students+1))
+    randomized_list = random.sample(original_list, len(original_list))
+    reordered_profiles = [res_profiles[i-1] for i in randomized_list]
+
+    # Return profiles
+    return jsonify(reordered_profiles)
+
 
 hostAddress = 'localhost'
 if __name__ == '__main__':
