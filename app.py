@@ -87,7 +87,7 @@ def create_code():
         new_code = Code(code=code)
         db.session.add(new_code)
         db.session.commit()
-
+        
         if debug:
             return code
         else:
